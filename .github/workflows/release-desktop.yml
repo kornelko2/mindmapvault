@@ -1,0 +1,139 @@
+name: release-desktop
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  security-and-version-checks:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Verify OSS version consistency
+        run: |
+          node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('frontend_app/package.json','utf8')).version; const tauri=JSON.parse(fs.readFileSync('desktop/src-tauri/tauri.conf.json','utf8')).version; const cargo=(fs.readFileSync('desktop/src-tauri/Cargo.toml','utf8').match(/^version\s*=\s*\"([^\"]+)\"/m)||[])[1]; if(!pkg||!tauri||!cargo){console.error('Failed to read one or more versions'); process.exit(1);} if(!(pkg===tauri && tauri===cargo)){console.error(`Version mismatch: frontend_app=${pkg}, tauri=${tauri}, cargo=${cargo}`); process.exit(1);} console.log(`Version synchronized: ${pkg}`);"
+
+      - name: Frontend dependency audit (prod)
+        run: pnpm --dir frontend_app audit --prod
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Rust dependency audit
+        run: cargo audit --manifest-path desktop/src-tauri/Cargo.toml
+
+  windows-portable:
+    runs-on: windows-latest
+    needs: security-and-version-checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build portable Windows binary
+        run: pnpm --dir frontend_app tauri:build -- --no-bundle
+
+      - name: Verify portable exe exists
+        shell: pwsh
+        run: |
+          if (!(Test-Path "desktop/src-tauri/target/release/MindMapVault.exe")) {
+            Write-Error "Missing desktop/src-tauri/target/release/MindMapVault.exe"
+          }
+
+      - name: Upload portable exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable-exe
+          path: desktop/src-tauri/target/release/MindMapVault.exe
+
+      - name: Publish portable exe to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: desktop/src-tauri/target/release/MindMapVault.exe
+
+  linux-appimage:
+    runs-on: ubuntu-22.04
+    needs: security-and-version-checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build Linux AppImage
+        run: pnpm --dir frontend_app tauri:build -- --bundles appimage
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: desktop/src-tauri/target/release/bundle/appimage/*.AppImage
+
+      - name: Publish AppImage to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: desktop/src-tauri/target/release/bundle/appimage/*.AppImage
