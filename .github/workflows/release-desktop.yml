@@ -4,10 +4,15 @@ on:
   push:
     tags:
       - 'v*'
+  release:
+    types: [created, published]
   workflow_dispatch:
 
 permissions:
   contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   security-and-version-checks:
@@ -92,6 +97,15 @@ jobs:
         with:
           files: desktop/src-tauri/target/release/MindMapVault.exe
 
+      - name: Publish portable exe to "latest" release
+        if: ${{ always() }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          files: desktop/src-tauri/target/release/MindMapVault.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   linux-appimage:
     runs-on: ubuntu-22.04
     needs: security-and-version-checks
@@ -139,3 +153,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: desktop/src-tauri/target/release/bundle/appimage/*.AppImage
+
+      - name: Publish AppImage to "latest" release
+        if: ${{ always() }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          files: desktop/src-tauri/target/release/bundle/appimage/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
