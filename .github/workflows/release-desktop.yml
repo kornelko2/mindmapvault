@@ -71,7 +71,7 @@ jobs:
         run: pnpm install
 
       - name: Build portable Windows binary
-        run: pnpm --dir frontend_app tauri:build -- --no-bundle
+        run: pnpm --dir frontend_app tauri:build
 
       - name: Verify portable exe exists
         shell: pwsh
@@ -126,7 +126,7 @@ jobs:
         run: pnpm install
 
       - name: Build Linux AppImage
-        run: pnpm --dir frontend_app tauri:build -- --bundles appimage
+        run: pnpm --dir frontend_app tauri:build
 
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4
