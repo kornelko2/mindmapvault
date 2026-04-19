@@ -39,7 +39,24 @@ jobs:
 
       - name: Verify OSS version consistency
         run: |
-          node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('frontend_app/package.json','utf8')).version; const tauri=JSON.parse(fs.readFileSync('desktop/src-tauri/tauri.conf.json','utf8')).version; const cargo=(fs.readFileSync('desktop/src-tauri/Cargo.toml','utf8').match(/^version\s*=\s*\"([^\"]+)\"/m)||[])[1]; if(!pkg||!tauri||!cargo){console.error('Failed to read one or more versions'); process.exit(1);} if(!(pkg===tauri && tauri===cargo)){console.error(`Version mismatch: frontend_app=${pkg}, tauri=${tauri}, cargo=${cargo}`); process.exit(1);} console.log(`Version synchronized: ${pkg}`);"
+          node <<'NODE'
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('frontend_app/package.json', 'utf8')).version;
+          const tauri = JSON.parse(fs.readFileSync('desktop/src-tauri/tauri.conf.json', 'utf8')).version;
+          const cargo = (fs.readFileSync('desktop/src-tauri/Cargo.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m) || [])[1];
+
+          if (!pkg || !tauri || !cargo) {
+            console.error('Failed to read one or more versions');
+            process.exit(1);
+          }
+
+          if (!(pkg === tauri && tauri === cargo)) {
+            console.error(`Version mismatch: frontend_app=${pkg}, tauri=${tauri}, cargo=${cargo}`);
+            process.exit(1);
+          }
+
+          console.log(`Version synchronized: ${pkg}`);
+          NODE
 
       - name: Frontend dependency audit (prod)
         run: pnpm --dir frontend_app audit --prod

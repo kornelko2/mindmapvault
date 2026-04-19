@@ -7,7 +7,7 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 ## [Unreleased]
 
 ### Next Version
-- Target OSS version for upcoming work: `0.1.3-oss`.
+- Target OSS version for upcoming work: `0.1.4-oss`.
 
 ### Added
 - Initial OSS repository extraction for desktop/local edition.
@@ -56,6 +56,24 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - `frontend_app/vite.config.ts` — `manualChunks` to bundle lucide icons into `lucide-icons`.
 - `frontend_app/src/pages/VaultsPage.tsx` — UI contrast fix for cloud-only infobox.
 - `desktop/src-tauri/tauri.conf.json` — added `beforeDevCommand` and updated version in this change set.
+
+
+## [0.1.3] - 2026-04-19
+
+### Fixed
+- Desktop login/local unlock footer badge now uses theme-aware colors so the `Tauri` label is readable in dark mode.
+- Added dark/light theme toggle on the desktop local unlock/login screen (`/local-unlock`) to match the hosted login UX.
+- CI workflow version-check step no longer fails due to shell interpolation of JavaScript template literals (replaced inline `node -e` with quoted heredoc script block).
+
+### Changed
+- Release workflow build jobs continue to inject `VITE_STRIPE_PUBLISHABLE_KEY` from GitHub repository secrets during desktop packaging.
+
+### Files
+- `.github/workflows/release-desktop.yml`
+- `frontend_app/src/components/DesktopTauriBadge.tsx`
+- `frontend_app/src/pages/LocalUnlockPage.tsx`
+- `OSS_VERSION`
+- `desktop/src-tauri/tauri.conf.json`
 
 
 ## [0.1.2] - 2026-04-19

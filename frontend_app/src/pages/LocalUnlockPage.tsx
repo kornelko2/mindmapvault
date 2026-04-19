@@ -7,6 +7,7 @@ import { generateUserKeyPairs } from '../crypto/kem';
 import { fromBase64, randomBytes, toBase64 } from '../crypto/utils';
 import { useAuthStore } from '../store/auth';
 import { useModeStore } from '../store/mode';
+import { useThemeStore } from '../store/theme';
 import type { SessionKeys } from '../types';
 
 interface LocalProfile {
@@ -30,6 +31,7 @@ export function LocalUnlockPage() {
   const navigate = useNavigate();
   const { setSessionKeys, setTokens } = useAuthStore();
   const setMode = useModeStore((s) => s.setMode);
+  const { mode: themeMode, toggleMode } = useThemeStore();
 
   // 'loading'  — scanning the folder
   // 'unlock'   — profile found in folder → show login form
@@ -212,6 +214,30 @@ export function LocalUnlockPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] transition-colors">
+      <button
+        type="button"
+        onClick={toggleMode}
+        className="absolute right-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--fg-muted)] transition hover:border-[var(--accent)] hover:text-[var(--fg)]"
+        title={themeMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {themeMode === 'dark' ? (
+          <>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <circle cx="12" cy="12" r="4" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41" />
+            </svg>
+            <span>Light</span>
+          </>
+        ) : (
+          <>
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+            </svg>
+            <span>Dark</span>
+          </>
+        )}
+      </button>
+
       <div className="w-full max-w-sm px-6">
 
         {/* Header */}
