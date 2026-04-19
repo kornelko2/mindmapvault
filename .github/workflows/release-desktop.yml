@@ -43,7 +43,9 @@ jobs:
         run: cargo install cargo-audit --locked
 
       - name: Rust dependency audit
-        run: cargo audit --manifest-path desktop/src-tauri/Cargo.toml
+        run: |
+          cd desktop/src-tauri
+          cargo audit
 
   windows-portable:
     runs-on: windows-latest
