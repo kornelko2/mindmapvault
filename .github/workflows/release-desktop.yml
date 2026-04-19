@@ -77,6 +77,8 @@ jobs:
 
       - name: Build portable Windows binary
         run: pnpm --dir frontend_app tauri:build
+        env:
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
 
       - name: Verify portable exe exists
         shell: pwsh
@@ -141,6 +143,8 @@ jobs:
 
       - name: Build Linux AppImage
         run: pnpm --dir frontend_app tauri:build
+        env:
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
 
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4

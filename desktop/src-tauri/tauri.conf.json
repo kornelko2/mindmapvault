@@ -1,11 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/tauri-v2/crates/tauri-cli/schema.json",
   "productName": "MindMapVault",
-    "version": "0.3.12",
+  "version": "0.1.2-oss",
   "identifier": "com.mindmapvault.desktop",
   "build": {
     "frontendDist": "../../frontend_app/dist",
     "devUrl": "http://127.0.0.1:5274",
+    "beforeDevCommand": "pnpm dev:app",
     "beforeBuildCommand": "npm run build --prefix ../frontend_app"
   },
   "app": {

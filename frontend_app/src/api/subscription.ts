@@ -31,9 +31,14 @@ export type Subscription = {
 export async function getBillingConfig(): Promise<Subscription> {
   const billing = await api.get<BillingConfig>('/billing/config');
 
+  // Allow overriding the publishable key with a local env var for development
+  // (only the public publishable key, never a secret key).
+  const envKey = (import.meta as any).env?.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+  const publishable = envKey && envKey.length > 0 ? envKey : billing.publishable_key;
+
   return {
     stripe_ready: billing.stripe_ready,
-    publishable_key: billing.publishable_key,
+    publishable_key: publishable,
     paid_yearly_price_label: billing.paid_yearly_price_label,
     paid_yearly_limit_bytes: billing.paid_yearly_limit_bytes,
   };

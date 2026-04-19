@@ -120,7 +120,11 @@ export function SubscriptionDialog({ open, onClose }: { open: boolean; onClose: 
         </div>
 
         <div className="subscription-dialog__body bg-[linear-gradient(180deg,_rgba(15,23,42,0.98),_rgba(2,6,23,1))] px-6 py-6">
-          {error && <p className="rounded-2xl border border-red-900/70 bg-red-950/40 px-4 py-3 text-sm text-red-300">{error}</p>}
+          {error && (
+            <p className="rounded-2xl border border-red-200 bg-red-50 text-red-800 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-300 px-4 py-3 text-sm">
+              {error}
+            </p>
+          )}
           {!error && (
             <div className="grid gap-6 lg:grid-cols-[1.25fr_0.9fr]">
               <div className="subscription-dialog__section rounded-2xl border border-slate-800 bg-slate-900/55 p-5">

@@ -6,6 +6,9 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+### Next Version
+- Target OSS version for upcoming work: `0.1.3-oss`.
+
 ### Added
 - Initial OSS repository extraction for desktop/local edition.
 - OSS governance docs: README, SECURITY, CONTRIBUTING, CODE_OF_CONDUCT, OSS_SCOPE, RELEASE_PROCESS.
@@ -38,6 +41,58 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 ### Security Validation
 - Frontend production dependency audit (`npm audit --omit=dev`) returned 0 vulnerabilities.
 - Rust lint (`cargo clippy --all-targets`) completed with no blocking diagnostics after local_store cleanup.
+
+### Changed
+- Use `tauri build --no-bundle` by default in `scripts/test-workflow.sh` and related workflows so the Tauri CLI embeds frontend assets correctly (avoids passing raw `--no-bundle` to `cargo`).
+- Consolidated Lucide icon imports into a single `lucide-icons` chunk via `frontend_app/vite.config.ts` `manualChunks` (reduces hundreds of tiny JS chunks).
+- Added `beforeDevCommand` to `desktop/src-tauri/tauri.conf.json` so `tauri dev` starts the frontend dev server automatically via the workspace `pnpm dev:app` script.
+- Added `scripts/sync-to-wsl-home-and-run.sh` and improved `test-workflow.sh` to simplify syncing the Windows checkout into WSL and running builds/dev in the native WSL workspace.
+- Documented and applied WSL/VM rendering workarounds: `WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1` for WebKit input issues, and `LIBGL_ALWAYS_SOFTWARE=1` or adding the user to the `render`/`video` groups for GPU device access on Linux.
+- Updated the light-mode contrast for the "Available only in Cloud mode" infobox in `frontend_app/src/pages/VaultsPage.tsx` (now uses slate colors matching the encryption infobox).
+
+### Files
+- `scripts/test-workflow.sh` — default to `tauri build --no-bundle` (opt-in bundle path retained).
+- `scripts/sync-to-wsl-home-and-run.sh` — helper to rsync repo into WSL workspace and run build/dev flows there.
+- `frontend_app/vite.config.ts` — `manualChunks` to bundle lucide icons into `lucide-icons`.
+- `frontend_app/src/pages/VaultsPage.tsx` — UI contrast fix for cloud-only infobox.
+- `desktop/src-tauri/tauri.conf.json` — added `beforeDevCommand` and updated version in this change set.
+
+
+## [0.1.2] - 2026-04-19
+
+### Added
+- `beforeDevCommand` in `desktop/src-tauri/tauri.conf.json` to enable `tauri dev` to start the frontend dev server automatically.
+
+### Changed
+- Default build flow uses `tauri build --no-bundle` to ensure frontend assets are embedded when running a headless build in CI/WSL.
+- Consolidated Lucide icons into a single `lucide-icons` chunk via `frontend_app/vite.config.ts` for faster dev tooling and fewer network requests.
+- Improved WSL/VM dev experience: added `scripts/sync-to-wsl-home-and-run.sh` and documented WebKit/GPU workarounds (`WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS`, `LIBGL_ALWAYS_SOFTWARE`, and `render`/`video` group permissions).
+- UI: mark cloud-only features (Encrypted attachments, Shares, Version history) with explicit "Cloud only" tooltips and toasts when used in local/offline mode.
+- Export options remain available in local mode (JSON/Markdown/PNG/PDF and encrypted `.crypt` download).
+- Subscription dialog: make Stripe error/alert styling readable in light mode and preserve dark-mode appearance.
+
+### Security / Ops
+- Allow a local frontend override for the Stripe publishable key via `VITE_STRIPE_PUBLISHABLE_KEY` for development (public-only key; do NOT add secret keys to the client).
+
+### Files
+- `CHANGELOG.md` — new release notes for `0.1.2`.
+- `OSS_VERSION` — bumped to `0.1.2-oss`.
+- `desktop/src-tauri/tauri.conf.json` — version bumped to `0.1.2-oss` and `beforeDevCommand` added.
+- `frontend_app/src/api/subscription.ts` — reads `VITE_STRIPE_PUBLISHABLE_KEY` as a publishable-key override if present.
+- `frontend_app/src/components/SubscriptionDialog.tsx` — improved light-mode styling for error messages.
+
+## [0.1.1] - 2026-04-19
+
+### Fixed
+- GitHub Actions workflow: resolve CI failures and version mismatches by:
+  - aligning the `pnpm` version used by `pnpm/action-setup@v4` with the workspace `package.json` (`pnpm@10.17.1`) to avoid ERR_PNPM_BAD_PM_VERSION.
+  - removing forwarded `tauri build` args that were passed through to Cargo (`--no-bundle`, `--bundles`) which caused unexpected-argument errors during native builds.
+  - running `cargo audit` from the crate directory instead of using an unsupported `--manifest-path` flag in the runner.
+  - opt-ing into Node.js 24 for JavaScript actions by setting `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` at workflow level to avoid deprecation issues.
+  - adding `release` trigger and publishing artifacts to a persistent `latest` release so built `MindMapVault.exe` and AppImage are available via stable URLs.
+
+### Notes
+- These workflow updates are contained in `.github/workflows/release-desktop.yml` and are intended to improve CI stability and make the latest desktop artifacts easy to download from Releases.
 
 ## [0.1.0] - Planned
 

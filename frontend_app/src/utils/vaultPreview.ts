@@ -138,7 +138,8 @@ export interface VaultPreviewSummary {
   saved_at: string;
 }
 
-type VaultPreviewCache = Record<string, VaultPreviewSummary>;
+type VaultPreviewThemeMap = Partial<Record<'dark' | 'light', VaultPreviewSummary>>;
+type VaultPreviewCache = Record<string, VaultPreviewThemeMap>;
 
 function normalizePreviewText(value: string | undefined | null): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
@@ -175,8 +176,15 @@ function writeCache(cache: VaultPreviewCache) {
   if (typeof window === 'undefined') return;
   try {
     const entries = Object.entries(cache)
-      .sort((left, right) => right[1].saved_at.localeCompare(left[1].saved_at))
-      .slice(0, MAX_CACHE_ENTRIES);
+      .map(([k, v]) => {
+        // pick latest saved_at among theme variants
+        const times = Object.values(v || {}).map((s) => s.saved_at).filter(Boolean) as string[];
+        const latest = times.length > 0 ? times.sort().reverse()[0] : '';
+        return [k, v, latest] as const;
+      })
+      .sort((left, right) => (right[2] || '').localeCompare(left[2] || ''))
+      .slice(0, MAX_CACHE_ENTRIES)
+      .map(([k, v]) => [k, v]);
     window.localStorage.setItem(CACHE_KEY, JSON.stringify(Object.fromEntries(entries)));
   } catch {
     // Ignore preview cache persistence failures.
@@ -557,44 +565,71 @@ async function rasterizeSvg(svg: string, width = CLOUD_PREVIEW_WIDTH, height = C
   }
 }
 
-function savePreview(vaultId: string, preview: VaultPreviewSummary): VaultPreviewSummary {
-  const cache = readCache();
-  cache[vaultId] = preview;
+function savePreview(vaultId: string, theme: 'dark' | 'light', preview: VaultPreviewSummary): VaultPreviewSummary {
+  const cache = readCache() as VaultPreviewCache;
+  const entry = cache[vaultId] ?? {};
+  entry[theme] = preview;
+  cache[vaultId] = entry;
   writeCache(cache);
   return preview;
 }
 
-export function loadCachedVaultPreview(vaultId: string, updatedAt: string): VaultPreviewSummary | null {
-  const cache = readCache();
+export function loadCachedVaultPreview(vaultId: string, updatedAt: string, theme: 'dark' | 'light' = 'dark'): VaultPreviewSummary | null {
+  const cache = readCache() as VaultPreviewCache;
   const entry = cache[vaultId];
-  if (!entry || entry.updated_at !== updatedAt) return null;
-  return entry;
+  if (!entry) return null;
+  const themed = entry[theme] ?? entry.dark ?? entry.light ?? null;
+  if (!themed || themed.updated_at !== updatedAt) return null;
+  return themed;
 }
 
 export async function saveTreeVaultPreview(vaultId: string, updatedAt: string, tree: MindMapTree): Promise<VaultPreviewSummary> {
   const stats = collectTreeStats(tree.root);
-  return savePreview(vaultId, {
+  const now = new Date().toISOString();
+  // Generate both dark and light cached previews for local-mode UI.
+  const darkSvg = await renderTreeSvg(tree, 'dark');
+  const lightSvg = await renderTreeSvg(tree, 'light');
+  const darkPreview: VaultPreviewSummary = {
     format: 'tree',
-    image_data_url: encodeSvg(await renderTreeSvg(tree, 'dark')),
+    image_data_url: encodeSvg(darkSvg),
     updated_at: updatedAt,
     nodeCount: stats.nodeCount,
     noteCount: stats.noteCount,
     attachmentCount: stats.attachmentCount,
-    saved_at: new Date().toISOString(),
-  });
+    saved_at: now,
+  };
+  const lightPreview: VaultPreviewSummary = {
+    ...darkPreview,
+    image_data_url: encodeSvg(lightSvg),
+    saved_at: now,
+  };
+  savePreview(vaultId, 'dark', darkPreview);
+  savePreview(vaultId, 'light', lightPreview);
+  return darkPreview;
 }
 
 export function saveGraphVaultPreview(vaultId: string, updatedAt: string, graph: MindMapGraph): VaultPreviewSummary {
   const stats = collectGraphStats(graph);
-  return savePreview(vaultId, {
+  const now = new Date().toISOString();
+  const darkSvg = renderGraphSvg(graph, 'dark');
+  const lightSvg = renderGraphSvg(graph, 'light');
+  const darkPreview: VaultPreviewSummary = {
     format: 'graph',
-    image_data_url: encodeSvg(renderGraphSvg(graph, 'dark')),
+    image_data_url: encodeSvg(darkSvg),
     updated_at: updatedAt,
     nodeCount: stats.nodeCount,
     noteCount: stats.noteCount,
     attachmentCount: stats.attachmentCount,
-    saved_at: new Date().toISOString(),
-  });
+    saved_at: now,
+  };
+  const lightPreview: VaultPreviewSummary = {
+    ...darkPreview,
+    image_data_url: encodeSvg(lightSvg),
+    saved_at: now,
+  };
+  savePreview(vaultId, 'dark', darkPreview);
+  savePreview(vaultId, 'light', lightPreview);
+  return darkPreview;
 }
 
 export async function createCloudTreeVaultPreview(tree: MindMapTree, theme: ThemeMode): Promise<{

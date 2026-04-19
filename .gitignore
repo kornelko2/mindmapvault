@@ -66,3 +66,7 @@ __pycache__/
 DECISIONS_NEEDED.md
 OSS_SCOPE.md
 RELEASE_PROCESS.md
+# Keep developer scripts tracked. Ignore only generated/backup files inside scripts/
+/scripts/*.bak*
+/scripts/*.tmp
+/scripts/*.orig

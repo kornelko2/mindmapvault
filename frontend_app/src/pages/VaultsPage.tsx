@@ -232,12 +232,37 @@ const VaultCard = memo(function VaultCard({
   const persistedLabels = normalizeVaultLabels(map.vault_labels);
   const isSharedVault = activeShareCount > 0 || persistedSharingMode === 'shared';
   const blurPreview = isSharedVault;
-  const sharingToneClass = isSharedVault
-    ? 'border-accent/40 bg-accent/10 text-slate-100'
-    : 'border-slate-600 bg-slate-800/70 text-slate-300';
-  const encryptionToneClass = persistedEncryptionMode === 're-encrypted'
-    ? 'border-amber-400/30 bg-amber-400/10 text-amber-200'
-    : 'border-slate-600 bg-slate-800/70 text-slate-300';
+  const { mode: themeMode } = useThemeStore();
+
+  function hexToRgb(hex: string) {
+    const h = hex.replace('#', '');
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+
+  function luminance([r, g, b]: number[]) {
+    const srgb = [r, g, b].map((v) => v / 255).map((c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)));
+    return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+  }
+
+  function readableTextColor(bgHex: string) {
+    try {
+      const rgb = hexToRgb(bgHex);
+      return luminance(rgb) > 0.6 ? '#0f172a' : '#ffffff';
+    } catch {
+      return '#ffffff';
+    }
+  }
+
+  const labelBg = persistedColor;
+  const labelText = readableTextColor(labelBg);
+
+  const sharingStyle: CSSProperties = isSharedVault
+    ? { backgroundColor: labelBg, borderColor: labelBg, color: labelText }
+    : { backgroundColor: themeMode === 'light' ? '#f3f4f6' : '#0f172a', borderColor: themeMode === 'light' ? '#e5e7eb' : '#0b1220', color: themeMode === 'light' ? '#0f172a' : '#cbd5e1' };
+
+  const encryptionStyle: CSSProperties = persistedEncryptionMode === 're-encrypted'
+    ? { backgroundColor: '#f59e0b33', borderColor: '#f59e0b66', color: themeMode === 'light' ? '#92400e' : '#fbbf24' }
+    : { backgroundColor: themeMode === 'light' ? '#f3f4f6' : '#0f172a', borderColor: themeMode === 'light' ? '#e5e7eb' : '#0b1220', color: themeMode === 'light' ? '#0f172a' : '#cbd5e1' };
   const dirty =
     map.draftNote !== map.vaultNote ||
     map.draftColor !== persistedColor ||
@@ -443,7 +468,8 @@ const VaultCard = memo(function VaultCard({
             <button
               type="button"
               onClick={() => setStatusDialog('sharing')}
-              className={`mt-2 flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition hover:border-accent/50 hover:bg-slate-800/80 ${sharingToneClass}`}
+              className="mt-2 flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition hover:border-accent/50 hover:bg-slate-800/80"
+              style={sharingStyle}
               title="Open sharing details"
             >
               <span className="flex items-center gap-2">
@@ -476,7 +502,8 @@ const VaultCard = memo(function VaultCard({
             <button
               type="button"
               onClick={() => setStatusDialog('encryption')}
-              className={`mt-2 flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition hover:border-accent/50 hover:bg-slate-800/80 ${encryptionToneClass}`}
+              className="mt-2 flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition hover:border-accent/50 hover:bg-slate-800/80"
+              style={encryptionStyle}
               title="Open encryption details"
             >
               <span className="flex items-center gap-2">
@@ -592,7 +619,7 @@ const VaultCard = memo(function VaultCard({
 
             {statusDialog === 'sharing' ? (
               <div className="mt-4 space-y-4 text-sm text-slate-300">
-                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${sharingToneClass}`}>
+                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium`} style={sharingStyle}>
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     {isSharedVault ? (
                       <>
@@ -612,7 +639,7 @@ const VaultCard = memo(function VaultCard({
                   {isSharedVault ? 'Shared vault' : 'Private vault'}
                 </div>
                 {isLocalMode ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-surface dark:text-slate-400">
                     Available only in Cloud mode.
                   </div>
                 ) : (
@@ -631,7 +658,7 @@ const VaultCard = memo(function VaultCard({
               </div>
             ) : (
               <div className="mt-4 space-y-4 text-sm text-slate-300">
-                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${encryptionToneClass}`}>
+                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium`} style={encryptionStyle}>
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     {persistedEncryptionMode === 're-encrypted' ? (
                       <>
@@ -1037,7 +1064,7 @@ export function VaultsPage() {
     }
     const nextStates: Record<string, VaultPreviewState> = {};
     for (const map of maps) {
-      const summary = loadCachedVaultPreview(map.id, map.updated_at);
+      const summary = loadCachedVaultPreview(map.id, map.updated_at, themeMode);
       nextStates[map.id] = summary ? { loading: false, summary } : { loading: false };
     }
     setPreviewStates(nextStates);
