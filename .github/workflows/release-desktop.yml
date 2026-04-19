@@ -24,7 +24,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: '10.17.1'
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -60,7 +60,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: '10.17.1'
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -115,7 +115,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: '10.17.1'
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
