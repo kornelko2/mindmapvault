@@ -9,6 +9,12 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 ### Next Version
 - Target OSS version for upcoming work: `0.1.4-oss`.
 
+### Fixed
+- GitHub Actions: updated Node.js version from 20 to 24 to resolve deprecation warning on GitHub Actions runners.
+
+### Known Issues
+- Stripe billing integration in Windows desktop app may show customer mismatch errors if `VITE_STRIPE_PUBLISHABLE_KEY` GitHub Actions secret is not configured. Ensure the repository secret is set to the public Stripe publishable key matching your backend configuration.
+
 ### Added
 - Initial OSS repository extraction for desktop/local edition.
 - OSS governance docs: README, SECURITY, CONTRIBUTING, CODE_OF_CONDUCT, OSS_SCOPE, RELEASE_PROCESS.
