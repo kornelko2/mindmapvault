@@ -9,6 +9,12 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 ### Next Version
 - Target OSS version for upcoming work: `0.1.4-oss`.
 
+### Added
+- Public OSS credits page at `frontend_app/public/CREDITS.md` summarizing the main OSS components used by the app, what they are used for, and the main upstream license terms.
+
+### Changed
+- OSS landing footer now includes a `Credits` entry and raw markdown link so acknowledgements and licensing notes are visible from the public landing experience.
+
 ### Fixed
 - GitHub Actions: updated Node.js version from 20 to 24 to resolve deprecation warning on GitHub Actions runners.
 

@@ -255,6 +255,10 @@ export function LandingPage() {
   const [whitepaperLoading, setWhitepaperLoading] = useState(false);
   const [whitepaperError, setWhitepaperError] = useState('');
   const [whitepaperHtml, setWhitepaperHtml] = useState('');
+  const [creditsOpen, setCreditsOpen] = useState(false);
+  const [creditsLoading, setCreditsLoading] = useState(false);
+  const [creditsError, setCreditsError] = useState('');
+  const [creditsHtml, setCreditsHtml] = useState('');
   const uiVersion = packageJson.version;
 
   useEffect(() => {
@@ -283,6 +287,33 @@ export function LandingPage() {
       cancelled = true;
     };
   }, [whitepaperOpen, whitepaperHtml]);
+
+  useEffect(() => {
+    if (!creditsOpen || creditsHtml) return;
+
+    let cancelled = false;
+    (async () => {
+      setCreditsLoading(true);
+      setCreditsError('');
+      try {
+        const res = await fetch('/CREDITS.md', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Failed to load credits (${res.status})`);
+        const md = await res.text();
+        const parsed = marked.parse(md, { async: false }) as string;
+        if (!cancelled) setCreditsHtml(DOMPurify.sanitize(parsed));
+      } catch (err) {
+        if (!cancelled) {
+          setCreditsError(err instanceof Error ? err.message : 'Failed to load credits');
+        }
+      } finally {
+        if (!cancelled) setCreditsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [creditsOpen, creditsHtml]);
 
   return (
     <div className="min-h-screen bg-surface text-white">
@@ -547,7 +578,24 @@ export function LandingPage() {
 
       <footer className="border-t border-slate-800/80 bg-surface-1/80">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-5 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span>MindMapVault app landing</span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span>MindMapVault app landing</span>
+            <button
+              type="button"
+              onClick={() => setCreditsOpen(true)}
+              className="transition hover:text-white"
+            >
+              Credits
+            </button>
+            <a
+              href="/CREDITS.md"
+              target="_blank"
+              rel="noreferrer"
+              className="transition hover:text-white"
+            >
+              Raw markdown
+            </a>
+          </div>
           <span>Project v{currentReleaseVersion} · App UI package v{uiVersion}</span>
         </div>
       </footer>
@@ -580,6 +628,40 @@ export function LandingPage() {
               )}
               <div className="mt-4 border-t border-slate-700 pt-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
                 Prefer raw file view? <a href="/SECURITY.md" target="_blank" rel="noreferrer" className="text-accent underline">Open SECURITY.md</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {creditsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setCreditsOpen(false)}>
+          <div
+            className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-surface-1 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-700 px-5 py-3">
+              <h2 className="text-base font-semibold text-white">MindMapVault OSS Credits and Licenses</h2>
+              <button
+                type="button"
+                onClick={() => setCreditsOpen(false)}
+                className="rounded-md border border-slate-600 px-2.5 py-1 text-sm text-slate-300 hover:border-slate-500 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[calc(90vh-56px)] overflow-y-auto px-5 py-4" style={{ color: 'var(--text-primary)' }}>
+              {creditsLoading && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading credits…</p>}
+              {creditsError && <p className="text-sm text-red-400">{creditsError}</p>}
+              {!creditsLoading && !creditsError && (
+                <article
+                  className="whitepaper-md text-sm leading-6"
+                  dangerouslySetInnerHTML={{ __html: creditsHtml }}
+                />
+              )}
+              <div className="mt-4 border-t border-slate-700 pt-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                Prefer raw file view? <a href="/CREDITS.md" target="_blank" rel="noreferrer" className="text-accent underline">Open CREDITS.md</a>
               </div>
             </div>
           </div>
