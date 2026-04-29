@@ -194,6 +194,15 @@ This OSS edition is a demonstration and transparency layer for the commercial pr
 
 The hosted product runs additional closed-source infrastructure (auth, billing, encrypted sync, real-time collaboration). The encryption model and local-first storage design visible in this repository are the same architecture used in the hosted product.
 
+## Credits And Thanks
+
+MindMapVault OSS is built on the work of many open-source maintainers, contributors, and communities across the React, Tauri, Rust, cryptography, and tooling ecosystems.
+
+Respectful thanks to everyone whose libraries, documentation, examples, and infrastructure made this project possible.
+
+For the detailed credits and licensing summary used by this repository, see:
+- [Credits and Licenses](CREDITS.md)
+
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for planned features, the open-source strategy, and how to contribute ideas.
